@@ -1,3 +1,17 @@
+# Data folders
+babyslakh_16k/
+dice_songs/
+lakh_midi/
+
+# .pkl and .p files
+*.pkl
+*.p
+*.h5
+
+# .wav files
+*.wav
+*.mid
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
