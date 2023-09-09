@@ -2,11 +2,14 @@
 babyslakh_16k/
 dice_songs/
 lakh_midi/
+logs/
+wav_data/
 
 # .pkl and .p files
 *.pkl
 *.p
 *.h5
+*.keras
 
 # .wav files
 *.wav

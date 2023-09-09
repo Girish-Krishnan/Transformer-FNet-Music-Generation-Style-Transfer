@@ -14,7 +14,7 @@ def midi_to_wav(input_path, output_path):
 warnings.filterwarnings("ignore")
 
 # Load your trained model
-model = load_model('model.h5', custom_objects={'FNetBlock': FNetBlock, 'FourierTransformLayer': FourierTransformLayer})
+model = load_model('model.h5', custom_objects={'TransformerBlock': TransformerBlock, 'MultiHeadAttention': MultiHeadAttention, 'FourierTransformLayer': FourierTransformLayer, 'PointwiseFeedForwardNetwork': PointwiseFeedForwardNetwork, 'FNetBlock': FNetBlock})
 
 # Load the vocabulary and artist lookup tables
 notes = pickle.load(open('notes.p', 'rb'))
@@ -25,7 +25,7 @@ note_to_int = dict((note, number) for number, note in enumerate(notes))
 int_to_note = dict((number, note) for number, note in enumerate(notes))
 artist_to_int = dict((artist, idx) for idx, artist in enumerate(artists))
 
-def generate_sequence(seed, artist_name, sequence_length=500):
+def generate_sequence(seed, artist_name, sequence_length=1500):
     generated = []
     artist_int = artist_to_int[artist_name]
     for i in range(sequence_length):
@@ -42,6 +42,7 @@ def generate_sequence(seed, artist_name, sequence_length=500):
         prediction = model.predict([input_sequence, input_artist])
         prediction = prediction / np.sum(prediction)
         index = np.random.choice(len(notes), p=prediction[0])
+        #index = np.argmax(prediction)
         result = int_to_note[index]
         generated.append(result)
         seed.append(index)
@@ -62,15 +63,19 @@ def sequence_to_midi(sequence, artist_name):
         
         # Duration
         duration_val = elements[0].replace('<music21.duration.Duration ', '').replace('>', '')
-        if '/' in duration_val:
-            num, denom = duration_val.split('/')
-            duration_val = float(num) / float(denom)
-        else:
-            duration_val = float(duration_val)
+        try:
+            if '/' in duration_val:
+                num, denom = duration_val.split('/')
+                duration_val = float(num) / float(denom)
+            else:
+                duration_val = float(duration_val)
+        except:
+            continue
         
         # Note/Chord/Rest
         if 'Rest' in elements[1]:
-            new_note = note.Rest(quarterLength=duration_val)
+            new_note = note.Rest(quarterLength=duration_val / 16)
+            part.append(new_note)
         elif '<music21.note.Note' in elements[1]:
             # Multiple notes: Chord
             chord_notes = []
@@ -84,6 +89,8 @@ def sequence_to_midi(sequence, artist_name):
             except music21.pitch.PitchException as e:
                 print(f"Error encountered: {e}. Skipping chord creation.")
                 continue
+            
+            part.append(new_note)
 
         else:
             # Single note
@@ -92,7 +99,7 @@ def sequence_to_midi(sequence, artist_name):
             new_note = note.Note(pitch, quarterLength=duration_val)
             new_note.volume.velocity = velocity
         
-        part.append(new_note)
+            part.append(new_note)
     
     # Save as MIDI
     mf = s.write('midi', fp=f"{artist_name}_generated.mid")

@@ -72,7 +72,7 @@ def get_sequences(glob_query):
     return notes, artist_sequences
 
 def prepare_sequences(sequence, artist_sequences): 
-    """ Prepare the sequences used by the Neural Network... (rest of docstring unchanged) """
+    """ Prepare the sequences used by the Neural Network """
     input_sequence_length = 8
     network_artist_input = []
 
@@ -86,7 +86,6 @@ def prepare_sequences(sequence, artist_sequences):
     network_input = []
     network_output = []
 
-    # Here's where we added tqdm for the progress bar
     for i in tqdm(range(0, len(sequence) - input_sequence_length, 1), desc="Processing sequences"):
         sequence_in = sequence[i:i + input_sequence_length]
         sequence_out = sequence[i + input_sequence_length]
@@ -96,7 +95,6 @@ def prepare_sequences(sequence, artist_sequences):
 
     n_patterns = len(network_input)
 
-    # reshape the input into a format compatible with LSTM layers
     network_input = np.reshape(network_input, (n_patterns, input_sequence_length, 1))
     network_input = to_categorical(network_input, num_classes = n_vocab)
 
